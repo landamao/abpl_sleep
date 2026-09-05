@@ -1,0 +1,5 @@
+name: 给AI睡觉
+desc: 让 AI 睡觉休息，休息期间消息暂存，到点自动醒来并汇总回复
+version: v1.0
+author: 懒大猫
+repo: https://github.com/landamao/abpl_sleep
