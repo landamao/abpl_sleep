@@ -267,7 +267,7 @@ class Sleep(Star):
             消息={
                 "发送者ID": event.get_sender_id(),
                 "昵称": event.get_sender_name() or "",
-                "文本": 文本[:2000],
+                "文本": 文本,
                 "时间": self.格式化时间戳(datetime.now()),
             },
         )
