@@ -24,10 +24,6 @@ from .data import Data
     "h": 3600, "小时": 3600, "时": 3600,
 }
 
-# 「HH:MM」与当前时刻差在该容差内视为"就是现在"，
-# 避免 LLM 填了当前时间、当前分钟刚过一两秒就被滚到第二天
-整分钟容差秒 = 120
-
 # 框架/防抖在各处插入的 <system_reminder>...</system_reminder>，
 # 暂存消息合并时全部清掉，只保留插件自己附加的最后一条醒来提示
 系统提醒模式 = re.compile(r"<system_reminder>.*?</system_reminder>", re.DOTALL)
@@ -41,6 +37,11 @@ class Sleep(Star):
         self.data = Data(self.data_dir)
         休息设置: dict = config["休息设置"]
         self.最长休息秒 = float(休息设置["最长休息小时"]) * 3600
+        # 「HH:MM」与当前时刻差在该容差内视为"就是现在"，
+        # 避免 LLM 填了当前时间、当前分钟刚过一两秒就被滚到第二天
+        self.时间点容差秒 = int(休息设置.get("时间点容差秒", 120))
+        self.最短休息秒 = int(休息设置.get("最短休息秒", 5))
+        self.暂存消息上限 = int(休息设置.get("暂存消息上限", 100))
         self.醒来提示模板: str = 休息设置["醒来提示"]
         # 每个会话独立的唤醒定时任务：umo -> asyncio.Task
         self.唤醒任务: dict[str, asyncio.Task] = {}
@@ -76,10 +77,9 @@ class Sleep(Star):
 
     # ---------- 时间解析 ----------
 
-    @staticmethod
-    def 解析时间点(文本: str, 基准: datetime) -> datetime:
+    def 解析时间点(self, 文本: str, 基准: datetime) -> datetime:
         """解析时间点。支持 yyyy-mm-dd HH:MM / yyyy-mm-dd / HH:MM，
-        纯 HH:MM 早于基准时自动视为第二天（两分钟容差内视为"现在"）。
+        纯 HH:MM 早于基准时自动视为第二天（容差内视为"现在"）。
         解析失败抛 ValueError。
         """
         文本 = 文本.strip()
@@ -94,7 +94,7 @@ class Sleep(Star):
                     year=基准.year, month=基准.month, day=基准.day,
                 )
                 if 时间 <= 基准:
-                    if (基准 - 时间).total_seconds() <= 整分钟容差秒:
+                    if (基准 - 时间).total_seconds() <= self.时间点容差秒:
                         # 刚过去的整分钟（如 LLM 填了当前时间）视为立即
                         时间 = 基准
                     else:
@@ -184,7 +184,7 @@ class Sleep(Star):
             return "睡觉失败：需要提供持续时间或结束时间其中之一。"
 
         # 最短休息兜底（时长从生效时刻起算）；超过上限直接拒绝，不静默截断
-        醒来时间 = max(醒来时间, 生效时间 + timedelta(seconds=5))
+        醒来时间 = max(醒来时间, 生效时间 + timedelta(seconds=self.最短休息秒))
         if 醒来时间 > 生效时间 + timedelta(seconds=self.最长休息秒):
             请求时长 = self.格式化时长((醒来时间 - 生效时间).total_seconds())
             return (
@@ -270,6 +270,7 @@ class Sleep(Star):
                 "文本": 文本,
                 "时间": self.格式化时间戳(datetime.now()),
             },
+            单会话上限=self.暂存消息上限,
         )
         # 拦截本次 LLM 请求：睡觉时不回复，攒到醒来再说
         event.stop_event()

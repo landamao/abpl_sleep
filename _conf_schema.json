@@ -15,6 +15,39 @@
           "step": 0.5
         }
       },
+      "最短休息秒": {
+        "type": "int",
+        "description": "单次休息的时长下限（秒）",
+        "default": 5,
+        "hint": "请求的休息时长不足时自动补到该值，防止秒睡秒醒",
+        "slider": {
+          "min": 5,
+          "max": 600,
+          "step": 5
+        }
+      },
+      "暂存消息上限": {
+        "type": "int",
+        "description": "睡觉期间单个会话最多暂存的消息条数",
+        "default": 100,
+        "hint": "超出后丢弃最旧的暂存消息",
+        "slider": {
+          "min": 10,
+          "max": 1000,
+          "step": 10
+        }
+      },
+      "时间点容差秒": {
+        "type": "int",
+        "description": "「就是现在」判定容差（秒）",
+        "default": 120,
+        "hint": "LLM 填的开始时间只刚过去该秒数内时视为立即入睡，否则滚到明天同一时刻",
+        "slider": {
+          "min": 30,
+          "max": 600,
+          "step": 30
+        }
+      },
       "醒来提示": {
         "type": "text",
         "description": "醒来汇总消息时附加给 LLM 的提示语",
