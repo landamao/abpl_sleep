@@ -41,12 +41,40 @@
         "type": "int",
         "description": "「就是现在」判定容差（秒）",
         "default": 120,
-        "hint": "LLM 填的开始时间只刚过去该秒数内时视为立即入睡，否则滚到明天同一时刻",
+        "hint": "LLM 填的 HH:MM 只刚过去该秒数内时视为就是现在，否则滚到明天同一时刻",
         "slider": {
           "min": 30,
           "max": 600,
           "step": 30
         }
+      },
+      "睡前提醒分钟": {
+        "type": "int",
+        "description": "睡前提前多少分钟提醒一次 LLM",
+        "default": 5,
+        "hint": "到点向会话发一次「睡前提醒内容」，LLM 可主动说要去睡觉或陪用户聊几句；0 表示关闭",
+        "slider": {
+          "min": 0,
+          "max": 180,
+          "step": 5
+        }
+      },
+      "睡前提醒随机误差秒": {
+        "type": "int",
+        "description": "睡前提醒的随机误差（秒）",
+        "default": 120,
+        "hint": "提醒时刻在此基础上随机偏移 ±该秒数，避免每天准点；0 表示准点",
+        "slider": {
+          "min": 0,
+          "max": 600,
+          "step": 1
+        }
+      },
+      "睡前提醒内容": {
+        "type": "text",
+        "description": "睡前提醒投递给 LLM 的提示词",
+        "hint": "自动包裹 <system_reminder>；{n} 为距入睡的分钟数；留空关闭",
+        "default": "**(Sleep task)** You have **{n}** minutes left before bedtime. You can use this time to let the user know you're about to head to sleep, or stay and chat for a little while longer. When the time's up, the sleep task will automatically put you to sleep."
       },
       "醒来提示": {
         "type": "text",
